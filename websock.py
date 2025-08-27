@@ -2,6 +2,7 @@ import asyncio
 import websockets
 import json
 from collections import defaultdict
+import os  # to access env vars
 
 channels = defaultdict(set)
 joined = defaultdict(list)
@@ -31,7 +32,6 @@ async def handler(websocket):
                     "user": joined[user_channel]
                 })
 
-                # Send join message to all in the channel, remove closed connections
                 for conn in list(channels[user_channel]):
                     try:
                         await conn.send(join_message)
@@ -97,8 +97,9 @@ async def handler(websocket):
                 del joined[user_channel]
 
 async def main():
-    async with websockets.serve(handler, "0.0.0.0", 8765):
-        print("✅ WebSocket Server running at ws://0.0.0.0:8765")
+    port = int(os.environ.get("PORT", 8765))  # Use Railway's port or default locally
+    async with websockets.serve(handler, "0.0.0.0", port):
+        print(f"✅ WebSocket Server running at ws://0.0.0.0:{port}")
         await asyncio.Future()  # run forever
 
 if __name__ == "__main__":
